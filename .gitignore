@@ -98,3 +98,4 @@ crashlytics-build.properties
 Thumbs.db
 
 CLAUDE.md
+.claude/
