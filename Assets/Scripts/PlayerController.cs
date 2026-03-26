@@ -35,11 +35,11 @@ public class PlayerController : MonoBehaviour
         moveAction = InputSystem.actions.FindAction("Move");
         if (moveAction == null)
         {
-            Debug.LogError($"Error occured while initializing move actions");
+            Debug.LogError($"Error occured while initializing move action");
         }
         jumpAction = InputSystem.actions.FindAction("Jump");
         if (jumpAction == null) {
-            Debug.LogError($"Error occured while initializing jump actions");
+            Debug.LogError($"Error occured while initializing jump action");
         }
         
         // Cache the components for physics
@@ -81,6 +81,18 @@ public class PlayerController : MonoBehaviour
             Jump();
             jumpInput = false;
         }
+        Rotate();
+    }
+
+    void Rotate()
+    {
+        // Get camera directions and flatten to horizontal plane
+        Vector3 cameraForward = mainCamera.transform.forward;
+        
+        cameraForward.y = 0;
+        
+        cameraForward.Normalize();
+        playerRigidbody.rotation = Quaternion.LookRotation(cameraForward);
     }
 
     // Moves the player in camera-relative directions based on input.
