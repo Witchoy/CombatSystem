@@ -9,11 +9,11 @@ public class PlayerCombats : MonoBehaviour
 
     // Player variables
     [SerializeField]
-    private float radius = 0.5f;
+    private float radius = 0.1f;
     [SerializeField]
     private int damage = 25;
     [SerializeField]
-    private float range = 1;
+    private float range = 0.25f;
 
     void Awake()
     {
@@ -44,5 +44,11 @@ public class PlayerCombats : MonoBehaviour
                 hit.TakeDamage(damage);
             }
         }
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position + transform.forward * range, radius);
     }
 }
