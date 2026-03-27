@@ -92,6 +92,7 @@ crashlytics-build.properties
 *.sln
 *.csproj
 .vscode/
+.idea/
 
 # OS
 .DS_Store
