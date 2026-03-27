@@ -45,10 +45,4 @@ public class PlayerCombats : MonoBehaviour
             }
         }
     }
-
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position + transform.forward * range, radius);
-    }
 }
