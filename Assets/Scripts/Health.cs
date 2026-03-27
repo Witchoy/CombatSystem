@@ -3,20 +3,13 @@ using UnityEngine;
 
 public class Health : MonoBehaviour, IDamageable
 {
-    [SerializeField]
-    private int maxHealth;
-    private int currentHealth;
+    [SerializeField] private int maxHealth;
 
-    public event Action<int> OnHealthChanged;
+    private int currentHealth;
 
     private void Awake()
     {
         currentHealth = maxHealth;
-    }
-
-    private void Die()
-    {
-        Destroy(gameObject);
     }
 
     public void TakeDamage(int amount)
@@ -24,9 +17,13 @@ public class Health : MonoBehaviour, IDamageable
         Debug.Log("Croissant");
         currentHealth -= amount;
         OnHealthChanged?.Invoke(currentHealth);
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        if (currentHealth <= 0) Die();
+    }
+
+    public event Action<int> OnHealthChanged;
+
+    private void Die()
+    {
+        Destroy(gameObject);
     }
 }
