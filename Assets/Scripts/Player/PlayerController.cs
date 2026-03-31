@@ -14,19 +14,19 @@ namespace Player
 
         // Movement parameters
         [SerializeField] private float moveSpeed;
-
+        [SerializeField] private float rotationSpeed;
         [SerializeField] private float jumpForce;
-
-        private CapsuleCollider capsuleCollider;
-        private InputAction jumpAction;
-        private bool jumpInput, isGrounded;
 
         // Input actions
         private InputAction moveAction;
+        private InputAction jumpAction;
 
         // State variables
         private Vector2 moveInput;
         private Rigidbody playerRigidbody;
+        private CapsuleCollider capsuleCollider;
+        private Animator animator;
+        private bool jumpInput, isGrounded, isJumping;
 
         private void Awake()
         {
@@ -43,44 +43,62 @@ namespace Player
             if (capsuleCollider == null) Debug.LogError("Error occurred while initializing capsuleCollider");
 
             if (mainCamera == null) Debug.LogError("Error occurred while initializing camera");
+            animator = GetComponent<Animator>();
         }
 
         // Reads input every frame and stores it for physics application.
         private void Update()
         {
             moveInput = moveAction.ReadValue<Vector2>();
-            if (jumpAction.WasPressedThisFrame()) jumpInput = true;
-
-            isGrounded = Physics.Raycast(transform.position, Vector3.down, capsuleCollider.height / 2 + 0.1f,
-                walkableLayer);
+            if (jumpAction.WasPressedThisFrame())
+            {
+                jumpInput = true;
+            }
+            animator.SetFloat("speed", moveInput.magnitude);
+            animator.SetBool("isJumping", isJumping);
         }
 
         // Applies movement physics every fixed timestep.
         private void FixedUpdate()
         {
-            Move(moveInput);
+            var rayOrigin = transform.position + capsuleCollider.center;
+            var ray = new Ray(rayOrigin, Vector3.down);
+            var castDistance = capsuleCollider.height / 2;
+            isGrounded = Physics.Raycast(ray, castDistance, walkableLayer);
+
+            var dir = ComputeMoveDirection(moveInput);
+            Move(dir);
+            Rotate(dir);
+
             if (jumpInput && isGrounded)
             {
+                isJumping = true;
                 Jump();
                 jumpInput = false;
             }
-
-            Rotate();
-        }
-
-        private void Rotate()
-        {
-            // Get camera directions and flatten to horizontal plane
-            var cameraForward = mainCamera.transform.forward;
-
-            cameraForward.y = 0;
-
-            cameraForward.Normalize();
-            playerRigidbody.rotation = Quaternion.LookRotation(cameraForward);
+            if (!jumpInput && isGrounded && isJumping && playerRigidbody.linearVelocity.y <= 0)
+                isJumping = false;
         }
 
         // Moves the player in camera-relative directions based on input.
-        private void Move(Vector2 input)
+        private void Move(Vector3 moveDirection)
+        {
+            // Apply movement while preserving vertical velocity
+            var yVelocity = moveDirection.magnitude > 0.1f ? playerRigidbody.linearVelocity.y : 0f;
+            playerRigidbody.linearVelocity = new Vector3(moveDirection.x * moveSpeed, yVelocity, moveDirection.z * moveSpeed);
+        }
+
+        private void Rotate(Vector3 direction)
+        {
+            if (direction.magnitude < 0.1f) return;
+            
+            var targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+            if (direction.magnitude > 0.1f)
+                playerRigidbody.MoveRotation(Quaternion.Slerp(transform.rotation, targetRotation,
+                    rotationSpeed * Time.fixedDeltaTime));
+        }
+
+        private Vector3 ComputeMoveDirection(Vector2 input)
         {
             // Get camera directions and flatten to horizontal plane
             var cameraForward = mainCamera.transform.forward;
@@ -93,11 +111,8 @@ namespace Player
             cameraRight.Normalize();
 
             // Combine camera-relative directions with input
-            var moveDirection = cameraRight * input.x + cameraForward * input.y;
-
-            // Apply movement while preserving vertical velocity
-            playerRigidbody.linearVelocity = new Vector3(moveDirection.x * moveSpeed, playerRigidbody.linearVelocity.y,
-                moveDirection.z * moveSpeed);
+            var direction = cameraRight * input.x + cameraForward * input.y;
+            return direction.magnitude > 0.1f ? direction.normalized : Vector3.zero;
         }
 
         private void Jump()

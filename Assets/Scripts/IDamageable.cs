@@ -1,4 +1,6 @@
+// Implemented by any entity that can receive damage.
+
 public interface IDamageable
 {
-    public void TakeDamage(int amount);
+    void TakeDamage(int amount);
 }
